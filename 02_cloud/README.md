@@ -20,11 +20,13 @@ LINE Webhookとデバイス間の動作確認を行います。
 ### 構成イメージ
 
 
-SPRESENSE
-↓↑（USBシリアル）
-ローカルPC（仮サーバー）
-↓↑（Webhook）
 LINE
+↓
+LINE Platform
+↓ HTTPS
+ngrok
+↓
+ローカルPC（Node-RED）
 
 
 ---
@@ -60,7 +62,7 @@ Mac環境の場合は適宜読み替えて使用してください。
 
 1. LINEからのWebhook受信  
 2. デバイスとのシリアル通信  
-3. デバイス応答をLINEへ返信  
+3. デバイス応答をLINEへ返信 「現状は検証のため Push API で送信（Reply APIは未対応）」 
 
 ---
 
