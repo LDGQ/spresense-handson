@@ -1,0 +1,748 @@
+[
+    {
+        "id": "d1a89b042085ac76",
+        "type": "serial in",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "serial": "f08a773b63613441",
+        "x": 310,
+        "y": 340,
+        "wires": [
+            [
+                "b093cd6f8b709a7a",
+                "dc4a0cf2190a63b4"
+            ]
+        ]
+    },
+    {
+        "id": "4e0c20b739e1e220",
+        "type": "debug",
+        "z": "5215e1c65e5665b8",
+        "name": "debug 18",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1280,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "bb81e62a4d310552",
+        "type": "debug",
+        "z": "5215e1c65e5665b8",
+        "name": "debug 19",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "f2974337d58a1d0d",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "function 3",
+        "func": "const val = msg.payload.events[0].message.text\n\nmsg.txt = val\n\n\nreturn msg\n\n\n// LINE webhook からテキストを取り出すだけ（LED0 / ALLON / ALLOFF 等）\n// const events = msg.payload.events[0].message.text\n// // const events = msg.payload?.events;\n\n// if (!Array.isArray(events) || events.length === 0) {\n//     return null;\n// }\n\n// const ev = events[0];\n\n// // text メッセージ以外は無視\n// if (\n//     ev.type !== \"message\" ||\n//     !ev.message ||\n//     ev.message.type !== \"text\"\n// ) {\n//     return null;\n// }\n\n// // そのまま文字列を渡す\n// msg.text = ev.message.text;\n\n// return msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 1040,
+        "wires": [
+            [
+                "50b3e1540a141793"
+            ]
+        ]
+    },
+    {
+        "id": "50b3e1540a141793",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "function 4",
+        "func": "// LINEから抜き出したコマンド（例: \"LED0\"）を、シリアル用の1文字コマンドに変換する\n// 入力: msg.text\n// 出力: msg.payload = \"0\\n\" のように serial out にそのまま渡せる形\n\nconst cmd = msg.txt;\n\nconst map = {\n  \"LED0\": \"0\",\n  \"LED1\": \"1\",\n  \"LED2\": \"2\",\n  \"LED3\": \"3\",\n  \"ALLON\": \"a\",\n  \"ALLOFF\": \"x\"\n};\n\nconst out = map[cmd];\n\nif (!out) {\n  // 想定外コマンドは流さない（ラピプロでは事故防止のためnull）\n  node.warn(`Unknown cmd: \"${cmd}\"`);\n  return null;\n}\n\n// シリアル側が行区切りで読むことが多いので改行を付与（不要なら外す）\nmsg.payload = out + \"\\n\";\n\n// 参考：ログやデバッグ用に残す\nmsg.cmd_in = cmd;\nmsg.cmd_out = out;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 1040,
+        "wires": [
+            [
+                "bb81e62a4d310552"
+            ]
+        ]
+    },
+    {
+        "id": "1f7beea7e08c89db",
+        "type": "http in",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "url": "/line",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 280,
+        "y": 180,
+        "wires": [
+            [
+                "e5280edc83b40277",
+                "be072bd7e3dca46d"
+            ]
+        ]
+    },
+    {
+        "id": "e5280edc83b40277",
+        "type": "http response",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 490,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "be072bd7e3dca46d",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "コマンドの取り出し",
+        "func": "\n\nconst val = msg.payload.events[0].message.text\n\nmsg.txt = val\n\n\nreturn msg\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 180,
+        "wires": [
+            [
+                "ec5a5c57fa613508",
+                "8a5517535ff0d366"
+            ]
+        ]
+    },
+    {
+        "id": "ec5a5c57fa613508",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "LED1個の操作（問い合わせ機能付）",
+        "func": "// Node-RED Functionノード（1出力）\n// 受信：msg.txt にコマンド文字列が入っている前提\n// 出力：msg.payload にシリアル送信用の文字列を入れて次へ流す\n\nconst cmd = (msg.txt || \"\").toString().trim();\nlet tx = \"\";                                    // 送信コマンド（シリアルに流すテキスト）\n\n// ここで「受信コマンド」→「送信コマンド」へ変換する\nif (cmd === \"LED ON\" || cmd === \"ON\" || cmd === \"1\") {\n  tx = \"0\\n\";            // マイコン側で ON と解釈する値\n\n} else if (cmd === \"LED OFF\" || cmd === \"OFF\" || cmd === \"0\") {\n  tx = \"x\\n\";            // OFF\n\n}else if (cmd === \"GPS\" || cmd === \"gps\" ) {\n  tx = \"1\\n\";            // GPS\n\n} else if (cmd === \"状態問い合わせ\" || cmd === \"state\" || cmd === \"?\") {\n  tx = \"s\\n\";            // 状態問い合わせ（使わないなら消してOK）\n\n} else if (cmd === \"ヘルプ\" || cmd === \"help\") {\n    tx = \"1\\n\";            // 状態問い合わせ（使わないなら消してOK）\n\n} else {\n  // 想定外コマンド\n  msg.payload = `Unknown command: ${cmd}`;\n  msg.isError = true;\n  return msg;            // ここも次で返信/ログに回す\n}\n\n// マイコンへ送るテキストを payload に入れる\nmsg.payload = tx;\n\n// デバッグしやすいように残す（任意）\nmsg.cmd = cmd;\nmsg.tx = tx;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 180,
+        "wires": [
+            [
+                "2b6ed1302cf51766"
+            ]
+        ]
+    },
+    {
+        "id": "2b6ed1302cf51766",
+        "type": "serial out",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "serial": "f08a773b63613441",
+        "x": 1150,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "dc4a0cf2190a63b4",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "LEDの状態を送信（LINEからの指示に対するレスポンス）",
+        "func": "const sendStatus = (msg.payload || \"\").toString().trim();\n\n\nlet lineMessage // 送信するLINEのメッセージ\nlet PackageID   // LINEのスタンプのグループ\nlet StickerID   // LINEのスタンプ\nconsole.log(sendStatus)\nif(sendStatus === \"1\"){\n    \n    // LEDの点灯\n    lineMessage = \"LEDをONにしました\"\n    PackageID =\"11539\"\n    StickerID = \"52114113\"\n    console.log(\"on\")\n}else if (sendStatus === \"0\") {\n    \n    // LEDの消灯\n    lineMessage = \"LEDをOFFにしました\"\n    PackageID = \"11539\"\n    StickerID = \"52114121\"\n    console.log(\"off\")\n\n} else {\n    // 例外処理\n    return null;\n}\n\n\n\nvar post_request = {\n    \"headers\": {\n        \"content-type\": \"application/json; charset=UTF-8\",\n        \"Authorization\": \"Bearer \" + \"YOUR_TOKEN\"\n    },\n    \"payload\": {\n        \"to\": \"USER_ID\",   // ユーザーID\n                 \n\n                //   U11b15f80c01dc9ef88122421bdfd2458\n        \"messages\": [\n            {\n                \"type\": \"text\",         //送信するメッセージタイプ\n                \"text\": lineMessage     //送信するメッセージ\n            }\n            ,\n            {\n              \"type\": \"sticker\",\n              \"packageId\": PackageID,\n              \"stickerId\": StickerID\n            }\n        ]   \n    }\n};\n\n\n\nreturn post_request;\n\n\n\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 800,
+        "y": 380,
+        "wires": [
+            [
+                "eaa3549e85da9295"
+            ]
+        ]
+    },
+    {
+        "id": "eaa3549e85da9295",
+        "type": "http request",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1110,
+        "y": 340,
+        "wires": [
+            [
+                "4e0c20b739e1e220"
+            ]
+        ]
+    },
+    {
+        "id": "b093cd6f8b709a7a",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "位置情報の取得",
+        "func": "const line = (msg.payload || \"\").toString().trim();\n\n// GNSS以外は無視\nif (!line.startsWith(\"@RESP,GNSS,\")) {\n  return null;\n}\n\nconst parts = line.split(\",\").map(s => s.trim());\n\n// フォーマット最低限チェック\nif (parts.length < 5) {\n  msg.gnss = {\n    valid: false,\n    error: \"format_short\",\n    raw: line\n  };\n  return msg;\n}\n\nconst satsRaw = parts[2];\nconst latRaw  = parts[3];\nconst lonRaw  = parts[4];\n\nconst sats = parseInt(satsRaw, 10);\n\n// --- No-Fix 判定 ---\nconst isNoFix =\n  latRaw.toLowerCase().includes(\"no\") ||\n  lonRaw.toLowerCase().includes(\"no\");\n\nif (isNoFix) {\n  msg.gnss = {\n    valid: false,          // ← 重要：位置が無効\n    fix: false,\n    sats: isNaN(sats) ? null : sats,\n    status: \"NO_FIX\",\n    message: `${latRaw}, ${lonRaw}`,\n    raw: line,\n    ts: Date.now()\n  };\n\n  return msg;\n}\n\n// --- Fixあり ---\nconst lat = parseFloat(latRaw);\nconst lon = parseFloat(lonRaw);\n\nif (Number.isNaN(lat) || Number.isNaN(lon)) {\n  msg.gnss = {\n    valid: false,\n    fix: false,\n    sats,\n    status: \"PARSE_ERROR\",\n    raw: line\n  };\n  return msg;\n}\n\nmsg.gnss = {\n  valid: true,          // ← 位置が有効\n  fix: true,\n  sats,\n  lat,\n  lon,\n  status: \"FIX\",\n  raw: line,\n  ts: Date.now()\n};\n\n// よく使うならトップにも展開\nmsg.lat = lat;\nmsg.lon = lon;\nmsg.sats = sats;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 340,
+        "wires": [
+            [
+                "2afacfab8c936601"
+            ]
+        ]
+    },
+    {
+        "id": "2afacfab8c936601",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "位置情報のメッセージを作成してLINEで送信",
+        "func": "// スタンプは必要ないかもしれない\nconst valid = msg.gnss.valid;\nconst sats  = msg.gnss.sats;\nconst lat   = msg.gnss.lat;\nconst lon   = msg.gnss.lon;\n\n// 送信するLINEのメッセージ\nlet messages = [];\n\n// ===== valid === true のとき =====\nif (valid === true) {\n\n    // 位置情報メッセージ\n    messages.push({\n        \"type\": \"location\",\n        \"title\": `GNSS Fix (sats:${sats})`,\n        \"address\": \"SPRESENSE GNSS\",\n        \"latitude\": Number(lat),\n        \"longitude\": Number(lon)\n    });\n\n    // テキスト\n    messages.push({\n        \"type\": \"text\",\n        \"text\": `GNSS Fix ✅ sats:${sats}\\nlat:${lat.toFixed(6)}\\nlon:${lon.toFixed(6)}`\n    });\n\n    // スタンプ（任意）\n    messages.push({\n        \"type\": \"sticker\",\n        \"packageId\": \"8522\",\n        \"stickerId\": \"16581266\"\n    });\n\n// ===== valid === false のとき =====\n} else {\n\n    messages.push({\n        \"type\": \"text\",\n        \"text\": \"⚠️ GNSSデータが取れていません。\\n屋外でしばらく待ってください。\"\n    });\n\n    messages.push({\n        \"type\": \"sticker\",\n        \"packageId\": \"6136\",\n        \"stickerId\": \"10551392\"\n    });\n}\n\nvar post_request = {\n    \"headers\": {\n        \"content-type\": \"application/json; charset=UTF-8\",\n        \"Authorization\": \"Bearer \" + \"YOUR TOKEN\"  // ※本番は環境変数推奨\n    },\n    \"payload\": {\n        \"to\": \"USER_ID\",   // ユーザーID（必須）\n        \"messages\": messages\n    }\n};\n\nreturn post_request;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 340,
+        "wires": [
+            [
+                "eaa3549e85da9295"
+            ]
+        ]
+    },
+    {
+        "id": "6ee82d9cd74f60ef",
+        "type": "serial in",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "serial": "3b72ec51b2eecf9f",
+        "x": 270,
+        "y": 540,
+        "wires": [
+            [
+                "457123c9452157c7"
+            ]
+        ]
+    },
+    {
+        "id": "457123c9452157c7",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "シリアルで受信した写真をPCでの表示、LINE送信用に振り分け",
+        "func": "// 動いてはいますが、強引に動かしているので検証と修正が必要\n\n// --- helpers ---\nfunction toBuffer(payload) {\n    // serial in が Buffer で来るのが理想\n    if (Buffer.isBuffer(payload)) return payload;\n\n    // 文字列なら「バイナリ」として扱う（設定ミス時の応急）\n    if (typeof payload === \"string\") return Buffer.from(payload, \"binary\");\n\n    // ArrayBuffer / Uint8Array 系\n    if (payload && payload.buffer && payload.byteLength !== undefined) {\n        return Buffer.from(payload);\n    }\n\n    // number array\n    if (Array.isArray(payload)) return Buffer.from(payload);\n\n    return Buffer.alloc(0);\n}\n\nfunction concat2(a, b) {\n    if (!a || a.length === 0) return b;\n    if (!b || b.length === 0) return a;\n\n    // Buffer.concat が使えるならそれを使う\n    if (Buffer.concat) return Buffer.concat([a, b]);\n\n    // 互換：手動で結合\n    const out = Buffer.alloc(a.length + b.length);\n    a.copy(out, 0);\n    b.copy(out, a.length);\n    return out;\n}\n\n// buf内から 'SPJG' を探す（indexOfが無い環境向け）\nfunction findSig(buf, sig) {\n    // indexOfが使えるなら早い\n    if (buf.indexOf) return buf.indexOf(sig);\n\n    // 手動検索\n    for (let i = 0; i <= buf.length - sig.length; i++) {\n        let ok = true;\n        for (let j = 0; j < sig.length; j++) {\n            if (buf[i + j] !== sig[j]) { ok = false; break; }\n        }\n        if (ok) return i;\n    }\n    return -1;\n}\n\n// --- main ---\nlet buf = context.get('buf');\nif (!Buffer.isBuffer(buf)) buf = Buffer.alloc(0);\n\n// 今回入ってきた分を追記\nconst incoming = toBuffer(msg.payload);\nbuf = concat2(buf, incoming);\n\n// \"SPJG\"\nconst SIG = Buffer.from([0x53, 0x50, 0x4A, 0x47]);\n\nwhile (true) {\n    const idx = findSig(buf, SIG);\n    if (idx < 0) {\n        // バッファ肥大化防止：末尾だけ残す\n        if (buf.length > 1024 * 1024) buf = buf.slice(-1024);\n        break;\n    }\n\n    // 署名より前のゴミを捨てる\n    if (idx > 0) buf = buf.slice(idx);\n\n    // \"SPJG\"(4) + size(4) が揃ってる？\n    if (buf.length < 8) break;\n\n    // size little-endian（readUInt32LEが無い環境も考慮して手動）\n    const size = (buf[4]) | (buf[5] << 8) | (buf[6] << 16) | (buf[7] << 24);\n\n    // 妥当性チェック\n    if (size < 2000 || size > 2_000_000) {\n        // 偽ヒット対策：1バイト進めて再探索\n        buf = buf.slice(1);\n        continue;\n    }\n\n    const frameLen = 8 + size;\n    if (buf.length < frameLen) break;\n\n    // JPEG部分\n    const jpg = buf.slice(8, 8 + size);\n\n    // 次フレームへ\n    buf = buf.slice(frameLen);\n    context.set('buf', buf);\n\n    // ★ 表示用（旧dashboard向け DataURL）\n    msg.payload = \"data:image/jpeg;base64,\" + jpg.toString('base64');\n\n    // ★ 保存・LINE送信用（Buffer）\n    msg.jpg = jpg;\n    \n    // ★ 5秒に1回だけ流す\n    const now = Date.now();\n    const last = context.get('lastEmit') || 0;\n    if (now - last < 5000) {\n        context.set('buf', buf);\n        return null;\n    }\n    context.set('lastEmit', now);\n        \n\n    return msg; // 1フレームだけ流す（連続で来る）\n}\n\n// まだ揃ってないのでバッファ保持して終了\ncontext.set('buf', buf);\nreturn null;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 540,
+        "wires": [
+            [
+                "17c8bcd29f2dc550",
+                "2262f6cf72eb8292"
+            ]
+        ]
+    },
+    {
+        "id": "17c8bcd29f2dc550",
+        "type": "ui_template",
+        "z": "5215e1c65e5665b8",
+        "group": "a16036c517e97cc3",
+        "name": "",
+        "order": 9,
+        "width": 13,
+        "height": 12,
+        "format": "<div style=\"text-align:center;\">\n  <img ng-src=\"{{msg.payload}}\" style=\"width: 100%; height: auto; max-width: 960px;\" />\n</div>\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 980,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "370ac40c872359e4",
+        "type": "file",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "filename": "任意のパスを指定してください",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 1230,
+        "y": 560,
+        "wires": [
+            [
+                "75a98f9093a5f06d"
+            ]
+        ]
+    },
+    {
+        "id": "75a98f9093a5f06d",
+        "type": "debug",
+        "z": "5215e1c65e5665b8",
+        "name": "debug 20",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1460,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "2262f6cf72eb8292",
+        "type": "change",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "jpg",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 980,
+        "y": 560,
+        "wires": [
+            [
+                "370ac40c872359e4"
+            ]
+        ]
+    },
+    {
+        "id": "f0fc47aacc1b994f",
+        "type": "http in",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "url": "/latest.jpg",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 380,
+        "y": 780,
+        "wires": [
+            [
+                "f60fb3b67313c266"
+            ]
+        ]
+    },
+    {
+        "id": "f60fb3b67313c266",
+        "type": "file in",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "filename": "任意のパス",
+        "filenameType": "str",
+        "format": "",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 590,
+        "y": 780,
+        "wires": [
+            [
+                "f3856209e4025b10"
+            ]
+        ]
+    },
+    {
+        "id": "f3856209e4025b10",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "レスポンスヘッダー",
+        "func": "// レスポンスヘッダー\nmsg.headers = {\n  \"Content-Type\": \"image/jpeg\",\n  \"Cache-Control\": \"no-store\"\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 780,
+        "wires": [
+            [
+                "6298dfbe8658149c"
+            ]
+        ]
+    },
+    {
+        "id": "6298dfbe8658149c",
+        "type": "http response",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1010,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "1f1a870e73969c6d",
+        "type": "http request",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1010,
+        "y": 900,
+        "wires": [
+            [
+                "30f4d18d7815d0e8"
+            ]
+        ]
+    },
+    {
+        "id": "dd75dd6ef5bec24e",
+        "type": "inject",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 400,
+        "y": 900,
+        "wires": [
+            [
+                "2a71c5198992622a"
+            ]
+        ]
+    },
+    {
+        "id": "2a71c5198992622a",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "写真をLINEに送信I（画像のURLを共有）",
+        "func": "const CHANNEL_ACCESS_TOKEN = \"YOUR_TOKEN\";\nconst TO = \"USER_ID\"; // ←ユーザーID\nconst BASE_URL = \"https://xxxxxxxx/endpoint \"; // ←ngrokで発行したURI パスを写真のエンドポイントとそろえる\n\n\n\n// キャッシュ回避（同じURLだと古い画像が表示されることがある）\nconst url = BASE_URL + \"?t=\" + Date.now();\n\nmsg.method = \"POST\";\nmsg.url = \"https://api.line.me/v2/bot/message/push\";\nmsg.headers = {\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"Bearer \" + CHANNEL_ACCESS_TOKEN\n};\n\nmsg.payload = {\n  to: TO,\n  messages: [\n    {\n      type: \"image\",\n      originalContentUrl: url,\n      previewImageUrl: url\n    }\n  ]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 900,
+        "wires": [
+            [
+                "1f1a870e73969c6d"
+            ]
+        ]
+    },
+    {
+        "id": "30f4d18d7815d0e8",
+        "type": "debug",
+        "z": "5215e1c65e5665b8",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1200,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "6af690faded29c46",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "LINEからのコマンド受信のエンドポイント",
+        "info": "",
+        "x": 300,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "73e990879ac115e5",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "シリアルで指示",
+        "info": "シリアルでSPRESENSEにコマンドを送信する\nLEDの点灯\nLEDの消灯\n位置情報の取得\n写真の撮影と取得",
+        "x": 1200,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "f5fe759abbb04b56",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "SPRESENSEからのレンスポンス",
+        "info": "LEDの状態、GNSS情報を取得する",
+        "x": 300,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "95d425ad981806c7",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "カメラのデータをローカルで受信する",
+        "info": "カメラのデータをシリアルで受信して、\nNode-REDの中で表示して確認\nLINEに送信\nする。",
+        "x": 270,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "5ea2eca851cebcc3",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "PC上での表示",
+        "info": "SPRESENSEのカメラで撮影した写真を\n確認用にNode-REDのdash board上で表示する",
+        "x": 1010,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "2f512787411f000b",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "LINEに送信するために一時保存",
+        "info": "LINEで送信するには、HTTPSでアクセスできるところに写真を置いておく必要が在る\nそのためにローカルフォルダに一時保存\nその後にngrokでトンネルを通す\n\n（直接送信はLINEの仕組み上難しいかもしれない）",
+        "x": 790,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "811d6b54c0d4b534",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "写真送信のためのエンドポイント",
+        "info": "写真を送信する際には、HTTPSでアクセスできるところに\n写真がある必要がある。\nLINEに送信するときには、個々にアクセスするようにする",
+        "x": 250,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "f9c8aa71d23383a6",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "LINEへの写真の送信テスト（デバッグ用）",
+        "info": "LINEへの送信テスト\nここで任意のタイミングで写真を送信することができる",
+        "x": 280,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "d9850361eda72698",
+        "type": "http request",
+        "z": "5215e1c65e5665b8",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1110,
+        "y": 240,
+        "wires": [
+            [
+                "7fdad248dfa256ad"
+            ]
+        ]
+    },
+    {
+        "id": "8a5517535ff0d366",
+        "type": "function",
+        "z": "5215e1c65e5665b8",
+        "name": "写真をLINEに送信I（画像のURIを共有）",
+        "func": "const CHANNEL_ACCESS_TOKEN = \"YOUR_TOKEN\";\nconst TO = \"USER_ID\"; // ←ユーザーID\nconst BASE_URL = \"https://xxxxxxxx/endpoint \"; // ←ngrokで発行したURI パスを写真のエンドポイントとそろえる\n\n\n// 受信コマンド（LINEから来たテキスト想定）\nconst cmd = String(msg.txt || \"\").trim().toLowerCase();\n\n// コマンド判定\nconst isCameraCmd = (cmd === \"camera\");\n\nif (!isCameraCmd) return null;\n\n// 送信する画像URL（キャッシュ回避）\nconst url = `${BASE_URL}?t=${Date.now()}`;\n\n// LINE Push API リクエストを作る\nmsg.method = \"POST\";\nmsg.url = \"https://api.line.me/v2/bot/message/push\";\nmsg.headers = {\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": `Bearer ${CHANNEL_ACCESS_TOKEN}`\n};\nmsg.payload = {\n  to: TO,\n  messages: [\n    {\n      type: \"image\",\n      originalContentUrl: url,\n      previewImageUrl: url\n    }\n  ]\n};\n\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 240,
+        "wires": [
+            [
+                "d9850361eda72698"
+            ]
+        ]
+    },
+    {
+        "id": "7fdad248dfa256ad",
+        "type": "debug",
+        "z": "5215e1c65e5665b8",
+        "name": "debug 22",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1260,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "50188d9e28b13d4c",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "カメラの処理（暫定）",
+        "info": "カメラを動かせの指示が来たときは、\n写真を送信します。\n\nアルゴリズムもプログラムもとりあえず動くようにしていますが、\n最適な状態にはしていないので、どこかで整理する必要が在ります",
+        "x": 580,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "7e73fa5ad90d8286",
+        "type": "comment",
+        "z": "5215e1c65e5665b8",
+        "name": "シリアルのスピードには注意して下さい",
+        "info": "普段のやり取りとカメラの映像を儒人するときはシリアルの速度が違います。\n\n通常の速度：115200\nカメラを使用するとき：921600",
+        "x": 200,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "f08a773b63613441",
+        "type": "serial-port",
+        "serialport": "SPRESENSE接続",
+        "serialbaud": "115200",
+        "databits": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": 10000
+    },
+    {
+        "id": "3b72ec51b2eecf9f",
+        "type": "serial-port",
+        "serialport": "COM16",
+        "serialbaud": "921600",
+        "databits": 8,
+        "parity": "none",
+        "stopbits": 1,
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "",
+        "bin": "bin",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": 10000
+    },
+    {
+        "id": "a16036c517e97cc3",
+        "type": "ui_group",
+        "name": "simple",
+        "tab": "1a940499bdfbae09",
+        "order": 1,
+        "disp": true,
+        "width": 13,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "1a940499bdfbae09",
+        "type": "ui_tab",
+        "name": "Spresense",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
