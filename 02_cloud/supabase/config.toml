@@ -1,0 +1,26 @@
+# プロジェクトID
+project_id = "supabase"
+
+# API設定
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+# データベース設定
+[db]
+port = 54322
+major_version = 15
+
+# ストレージ設定（画像保存に使用）
+[storage]
+enabled = true
+# アップロード可能な最大ファイルサイズ
+file_size_limit = "50MiB"
+
+# 認証設定
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
