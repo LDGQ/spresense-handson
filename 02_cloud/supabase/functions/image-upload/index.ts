@@ -100,10 +100,10 @@ serve(async (req) => {
       throw new Error(`LINE API error: ${errorText}`);
     }
 
-    // LINE送信成功時にステータスを更新
+    // LINE送信成功時にステータスと画像パスを更新
     await supabase
       .from("capture_requests")
-      .update({ status: "sent", used_at: new Date().toISOString() })
+      .update({ status: "sent", image_path: fileName, used_at: new Date().toISOString() })
       .eq("request_token", requestToken);
 
     console.log(`Image uploaded and sent to user ${userId}: ${imageUrl}`);

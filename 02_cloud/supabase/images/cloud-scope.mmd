@@ -1,0 +1,34 @@
+flowchart LR
+    subgraph LINE["LINE"]
+        User[ユーザー] -->|タップ| LP[Platform]
+    end
+
+    subgraph Supabase["Supabase（本ハンズオンで構築）"]
+        LW[line-webhook<br>#40;Edge Function#41;] -->|呼び出し| MP[mqtt-publish<br>#40;Edge Function#41;]
+        IU[image-upload<br>#40;Edge Function#41;] -->|画像保存| ST[(Storage)]
+        DB[(capture_requests<br>#40;DBテーブル#41;)]
+        LW --> DB
+        IU -->|画像パス記録| DB
+    end
+
+    subgraph Broker["運営が準備済み"]
+        MQTT[MQTT Broker]
+    end
+
+    LP -->|Webhook| LW
+    MP -->|Publish| MQTT
+    MQTT -->|Subscribe| SUB[コンソールで<br>メッセージ受信確認]
+    CURL[curlで<br>画像送信] -->|HTTP POST| IU
+    IU -->|プッシュ通知| LP
+    LP -->|画像表示| User
+
+    style Supabase fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style Broker fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style LINE fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    style SUB fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    style CURL fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+
+    %% 撮影指示フロー（青）: タップ,呼び出し,LW→DB,Webhook,Publish,Subscribe
+    linkStyle 0,1,3,5,6,7 stroke:#1976d2,stroke-width:2px
+    %% 画像アップロードフロー（オレンジ）: 保存,IU→DB,HTTP POST,プッシュ通知,画像表示
+    linkStyle 2,4,8,9,10 stroke:#e65100,stroke-width:2px

@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant User as LINEユーザー
+    participant LINE as LINE Platform
+    participant LW as line-webhook<br>(Edge Function)
+    participant DB as capture_requests<br>(DBテーブル)
+    participant MP as mqtt-publish<br>(Edge Function)
+    participant MQTT as MQTT Broker
+    participant SP as Spresense
+    participant IU as image-upload<br>(Edge Function)
+    participant ST as Supabase Storage
+
+    User->>LINE: ① リッチメニューをタップ
+    LINE->>LW: Webhook送信
+    LW->>LW: 署名検証
+    LW->>DB: トークン発行・保存
+    LW->>MP: トークン+コマンド
+    MP->>MQTT: ② Publish
+    MQTT->>SP: ③ メッセージ受信
+    SP->>SP: ④ カメラ撮影
+    SP->>IU: ⑤ 画像+トークン送信
+    IU->>DB: トークンからユーザーID取得
+    IU->>ST: ⑥ 画像保存
+    IU->>DB: 画像パスを記録
+    IU->>LINE: ⑦ 画像プッシュ通知
+    LINE->>User: 撮影画像を表示
