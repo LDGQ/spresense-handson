@@ -123,7 +123,43 @@ Supabase Dashboardで画像保存用のバケットを作成します：
 3. Public bucket: チェックを入れる（画像をLINEで表示するため）
 4. Createをクリック
 
-### 5. Edge Functionsへの環境変数設定
+### 5. キャプチャリクエスト管理テーブルの作成
+
+LINE user\_idをMQTTブローカーに直接流さないよう、リクエストトークンでユーザーを管理するテーブルを作成します。
+
+Supabase DashboardのSQL Editorでテーブルを作成します：
+
+1. Supabase Dashboardを開く
+2. 左メニューから **SQL Editor** をクリック
+3. 以下のSQLを貼り付けて **Run** をクリック
+
+```sql
+create table capture_requests (
+  request_token uuid primary key default gen_random_uuid(),
+  line_user_id text not null,
+  status text not null default 'pending',
+  error_message text,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index idx_capture_requests_token on capture_requests(request_token);
+```
+
+SQLファイルは `migrations/create_capture_requests.sql` にも保存してあります。
+
+| カラム | 説明 |
+|---|---|
+| `request_token` | UUID。MQTTに送信するトークン（user\_idの代わり） |
+| `line_user_id` | LINEのユーザーID。サーバー側でのみ参照 |
+| `status` | 処理状態（`pending` → `sent` または `failed`） |
+| `error_message` | 失敗時のエラーメッセージ |
+| `used_at` | 画像アップロード・LINE送信完了時に記録 |
+| `created_at` | リクエスト作成日時 |
+
+**確認方法**: Supabase DashboardのTable Editorで`capture_requests`テーブルが作成されていることを確認します。
+
+### 6. Edge Functionsへの環境変数設定
 
 ```bash
 # 環境変数をEdge Functionsにデプロイ
@@ -136,7 +172,7 @@ supabase secrets set SUPABASE_ANON_KEY=your_anon_key
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### 6. Edge Functionsのデプロイ
+### 7. Edge Functionsのデプロイ
 
 ```bash
 # Edge Functionsをデプロイ
@@ -146,7 +182,7 @@ supabase functions deploy mqtt-publish --no-verify-jwt
 supabase functions deploy image-upload --no-verify-jwt
 ```
 
-### 7. LINE Webhook URLの設定
+### 8. LINE Webhook URLの設定
 
 LINE Developers Consoleで、Webhook URLを設定します：
 
@@ -177,8 +213,10 @@ subscribe状態のまま、LINEのリッチメニューからボタンをタッ�
 以下のようなメッセージが表示されれば成功です。
 
 ```json
-{"userId":"Uxxxx...","command":"capture","timestamp":"2026-03-24T06:00:00.000Z"}
+{"requestToken":"550e8400-e29b-41d4-a716-446655440000","command":"capture","timestamp":"2026-04-11T06:00:00.000Z"}
 ```
+
+MQTTメッセージにはLINEのユーザーIDではなく、`requestToken`（UUID）が含まれます。
 
 ### 2. image-uploadの動作確認（Spresenseなしで確認）
 
@@ -186,15 +224,11 @@ PCからcurlコマンドでSpresenseの動作をシミュレートし、画像�
 
 ```bash
 # testdataディレクトリにテスト用画像（neko.jpg）を配置してから実行
-# YOUR_LINE_USER_IDはLINEのユーザーIDに置き換え
-curl -X POST https://your-project.supabase.co/functions/v1/image-upload -F "image=@testdata/neko.jpg" -F "userId=YOUR_LINE_USER_ID"
+# YOUR_REQUEST_TOKENはMQTTメッセージのrequestTokenに置き換え
+curl -X POST https://your-project.supabase.co/functions/v1/image-upload -F "image=@testdata/neko.jpg" -F "requestToken=YOUR_REQUEST_TOKEN"
 ```
 
-**LINEユーザーIDの確認方法**: mqtt-publishのログから取得できます。
-
-```bash
-supabase functions logs mqtt-publish
-```
+**requestTokenの確認方法**: 手順1のmosquitto_subで受信したMQTTメッセージから取得できます。
 
 成功すると、Supabase Storageに画像が保存され、LINEに画像がプッシュ通知されます。
 

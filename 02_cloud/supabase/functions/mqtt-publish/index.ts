@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import mqtt from "npm:mqtt@5.3.4";
 
 interface MqttPublishRequest {
-  userId: string;
+  requestToken: string;
   command: string;
 }
 
@@ -10,7 +10,7 @@ serve(async (req) => {
   try {
     // リクエストボディを取得
     const requestBody: MqttPublishRequest = await req.json();
-    const { userId, command } = requestBody;
+    const { requestToken, command } = requestBody;
 
     // 環境変数からMQTT Broker情報を取得
     const mqttBrokerUrl = Deno.env.get("MQTT_BROKER_URL");
@@ -23,9 +23,9 @@ serve(async (req) => {
       );
     }
 
-    // メッセージのペイロードを作成
+    // メッセージのペイロードを作成（user_idではなくトークンを送信）
     const payload = JSON.stringify({
-      userId: userId,
+      requestToken: requestToken,
       command: command,
       timestamp: new Date().toISOString(),
     });

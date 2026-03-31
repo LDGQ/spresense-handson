@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 // LINE Messaging APIの型定義
 interface LineWebhookEvent {
@@ -59,10 +60,24 @@ serve(async (req) => {
       if (event.type === "message" || event.type === "postback") {
         const userId = event.source.userId;
 
-        // MQTT Publish Edge Functionを呼び出し
-        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        // Supabaseクライアントの初期化
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+        // capture_requestsテーブルにレコードを追加してトークンを取得
+        const { data, error: insertError } = await supabase
+          .from("capture_requests")
+          .insert({ line_user_id: userId })
+          .select("request_token")
+          .single();
+
+        if (insertError) {
+          throw new Error(`Failed to create capture request: ${insertError.message}`);
+        }
+
+        // MQTT Publish Edge Functionを呼び出し（user_idではなくトークンを送信）
         await fetch(`${supabaseUrl}/functions/v1/mqtt-publish`, {
           method: "POST",
           headers: {
@@ -70,7 +85,7 @@ serve(async (req) => {
             "Authorization": `Bearer ${supabaseAnonKey}`,
           },
           body: JSON.stringify({
-            userId: userId,
+            requestToken: data.request_token,
             command: "capture",
           }),
         });
