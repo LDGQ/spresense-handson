@@ -427,7 +427,7 @@ https://your-project.supabase.co/functions/v1/line-webhook
 4. **Webhook利用** をオンにする
 5. **検証** ボタンで接続テスト
 
-### テスト1: MQTTメッセージの確認（ハンズオン前半）
+### テスト1: MQTTメッセージの確認
 
 mosquitto_subでMQTTメッセージの受信を確認します。
 
@@ -445,7 +445,7 @@ subscribe状態のまま、LINEのリッチメニューからボタンをタッ�
 
 MQTTメッセージには `requestToken`（UUID）が含まれます。
 
-### テスト2: 画像アップロードの確認（ハンズオン前半・Spresenseなしで確認）
+### テスト2: 画像アップロードの確認（Spresenseなしで確認）
 
 PCからcurlコマンドでSpresenseの動作をシミュレートし、画像アップロード〜LINE通知の流れを確認します。
 
@@ -459,7 +459,7 @@ curl -X POST https://your-project.supabase.co/functions/v1/image-upload \
 
 成功すると、Supabase Storageに画像が保存され、LINEに画像がプッシュ通知されます。
 
-### テスト3: Spresenseとの結合テスト（ハンズオン後半）
+### テスト3: Spresenseとの結合テスト
 
 Spresenseを接続し、LINEのリッチメニューからボタンをタップします。
 数秒後、LINEに撮影された画像が送信されれば完成です。
