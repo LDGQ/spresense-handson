@@ -6,11 +6,11 @@ serve(async (req) => {
     // マルチパートフォームデータを解析
     const formData = await req.formData();
     const imageFile = formData.get("image") as File;
-    const userId = formData.get("userId") as string;
+    const requestToken = formData.get("requestToken") as string;
 
-    if (!imageFile || !userId) {
+    if (!imageFile || !requestToken) {
       return new Response(
-        JSON.stringify({ error: "Missing image or userId" }),
+        JSON.stringify({ error: "Missing image or requestToken" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -20,9 +20,33 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // トークンからLINEユーザーIDを取得
+    const { data: requestData, error: queryError } = await supabase
+      .from("capture_requests")
+      .select("line_user_id, used_at")
+      .eq("request_token", requestToken)
+      .single();
+
+    if (queryError || !requestData) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request token" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 使用済みトークンの再利用を防止
+    if (requestData.used_at) {
+      return new Response(
+        JSON.stringify({ error: "Request token already used" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = requestData.line_user_id;
+
     // ファイル名を生成（タイムスタンプ付き）
     const timestamp = new Date().getTime();
-    const fileName = `${userId}_${timestamp}.jpg`;
+    const fileName = `${requestToken}_${timestamp}.jpg`;
 
     // Storageに画像を保存
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -76,6 +100,12 @@ serve(async (req) => {
       throw new Error(`LINE API error: ${errorText}`);
     }
 
+    // LINE送信成功時にステータスと画像パスを更新
+    await supabase
+      .from("capture_requests")
+      .update({ status: "sent", image_path: fileName, used_at: new Date().toISOString() })
+      .eq("request_token", requestToken);
+
     console.log(`Image uploaded and sent to user ${userId}: ${imageUrl}`);
 
     return new Response(
@@ -88,9 +118,27 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    // 失敗時にステータスとエラーメッセージを記録
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const formData = await req.clone().formData().catch(() => null);
+      const requestToken = formData?.get("requestToken") as string | null;
+      if (requestToken) {
+        await supabase
+          .from("capture_requests")
+          .update({ status: "failed", error_message: errorMsg, used_at: new Date().toISOString() })
+          .eq("request_token", requestToken);
+      }
+    } catch (_) {
+      // ステータス更新失敗は無視
+    }
+
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMsg }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
