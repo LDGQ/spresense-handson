@@ -1,8 +1,8 @@
 # spresense-handson
 
 ## 注意事項
-本リポジトリは現在構成検討中のドラフト版です。
-内容は今後変更される可能性があります。
+本リポジトリはSPRESENES×LINEのハンズオンで使用します。
+現在も内容は更新中ですので今後も変更される可能性があります。
 
 フィードバックをいただけると幸いです。
 ## 目的
@@ -11,11 +11,6 @@ SPRESENSE・クラウド・LINEを接続し、
 
 ## 全体構成
 - Device（SPRESENSE）
-- Cloud（MQTT / Node-RED）
+- Supabase
 - LINE Messaging API
-- Machine Learning
-
-## 最終ゴール
-LINEからデータを送り、
-SPRESENSEで処理し、
-結果をLINEに返す。
+- - Cloud（MQTT / Node-RED）
