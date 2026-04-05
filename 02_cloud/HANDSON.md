@@ -66,7 +66,81 @@ LINE <-> Supabase <-> MQTT Broker <-> Spresense
 1. リポジトリページを開く
 2. **Code** > **Codespaces** > **Create codespace on main** をクリック
 3. 起動完了まで待つ（Supabase CLI・mosquittoが自動インストールされます）
-4. このファイル（`HANDSON.md`）を右クリック > **Open Preview** で手順書を表示
+4. `02_cloud/HANDSON.md` を右クリック > **Open Preview** で手順書を表示
+
+<details>
+<summary>CodeSpacesが起動できない場合（ローカル環境での実行）</summary>
+
+CodeSpacesが利用できない場合は、ローカルPCに必要なツールをインストールして進めます。
+
+**前提条件**
+
+- **Node.js**（v18以上）がインストール済みであること
+- **Git** がインストール済みであること
+
+**1. リポジトリのクローン**
+
+```bash
+git clone https://github.com/<リポジトリのURL>.git
+cd spresense-handson
+```
+
+**2. Supabase CLIのインストール**
+
+**macOS（Homebrew）**
+
+```bash
+brew install supabase/tap/supabase
+```
+
+**Windows（Scoop）**
+
+```powershell
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+```
+
+**npm（OS共通）**
+
+```bash
+npm install -g supabase
+```
+
+インストール確認：
+
+```bash
+supabase --version
+```
+
+**3. Mosquittoクライアントのインストール**
+
+MQTT Brokerとの通信テストに使用します。
+
+**macOS（Homebrew）**
+
+```bash
+brew install mosquitto
+```
+
+**Windows**
+
+[Mosquitto公式サイト](https://mosquitto.org/download/)からインストーラをダウンロードしてインストールしてください。
+
+**Ubuntu/Debian**
+
+```bash
+sudo apt update && sudo apt install -y mosquitto-clients
+```
+
+**4. 作業ディレクトリへ移動**
+
+```bash
+cd 02_cloud/supabase
+```
+
+以降の手順はCodeSpacesの場合と同様に進めてください。
+
+</details>
 
 ---
 
@@ -88,12 +162,16 @@ LINE <-> Supabase <-> MQTT Broker <-> Spresense
 3. **Create new project** をクリック
 4. プロジェクトの作成完了まで待つ（1〜2分）
 
+![プロジェクト作成画面](images/supabase-create-project.png)
+
 ### アクセストークンの取得
 
 1. https://supabase.com/dashboard/account/tokens にアクセス
 2. **Generate new token** をクリック
 3. トークン名を入力して生成
 4. 表示されたトークンをコピー（この画面を閉じると再表示できません）
+
+![アクセストークン生成画面](images/supabase-access-token.png)
 
 ### CLIからプロジェクトにリンク
 
@@ -111,6 +189,12 @@ supabase login --token your-access-token
 supabase link --project-ref your-project-ref
 ```
 
+以下のように表示されればリンク成功です：
+
+```
+Finished supabase link.
+```
+
 ---
 
 ## 3. LINE Developersチャネル作成・リッチメニュー設定（20分）
@@ -124,8 +208,6 @@ supabase link --project-ref your-project-ref
 
 ### Messaging APIの有効化
 
-> **注意**: 2024年9月以降、LINE DevelopersコンソールからMessaging APIチャネルを直接作成する方法は廃止されました。LINE Official Account ManagerからMessaging APIを有効化します。
-
 1. 作成したアカウントの管理画面を開く
 2. 画面右上の **設定** をクリック
 3. 左メニューから **Messaging API** を選択
@@ -135,6 +217,8 @@ supabase link --project-ref your-project-ref
    - 既存の場合: リストから選択
 6. **同意する** をクリック
 7. LINE Developersコンソール側にもMessaging APIチャネルが自動作成される
+
+![Messaging API有効化画面](images/line-messaging-api-enable.png)
 
 ### 認証情報の取得
 
@@ -159,6 +243,8 @@ https://developers.line.biz/console/ にログインし、作成されたチャ�
 6. アクションタイプ: **テキスト**、テキスト: `capture`
 7. 保存
 
+![リッチメニュー設定画面](images/line-richmenu-setting.png)
+
 ### Botの友だち追加
 
 1. LINE Developersコンソールで作成したチャネルを開く
@@ -166,6 +252,8 @@ https://developers.line.biz/console/ にログインし、作成されたチャ�
 3. 画面に表示されている **QRコード** をスマホのカメラまたはLINEアプリのQRコードリーダーで読み取る
 4. 友だち追加画面が表示されるので **追加** をタップ
 5. トーク画面を開き、Botとのチャットが表示されることを確認
+
+![Botの友だち追加完了](images/line-bot-friend.jpeg)
 
 ---
 
@@ -202,7 +290,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
 | `LINE_CHANNEL_SECRET` | 手順3で取得したチャネルシークレット |
 | `MQTT_BROKER_URL` | 講師から案内します |
 | `MQTT_TOPIC` | 講師から案内します |
-| `SUPABASE_URL` | Supabase Dashboard > **Settings** > **API Keys** > **Project URL** |
+| `SUPABASE_URL` | Supabase Dashboard > **Project Overview** > **Project URL** |
 | `SUPABASE_ANON_KEY` | Supabase Dashboard > **Settings** > **API Keys** > **Publishable key** |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard > **Settings** > **API Keys** > **Secret key** |
 
@@ -222,6 +310,8 @@ Supabase Dashboardで画像保存用のバケットを作成します：
 3. バケット名: `spresense-images`
 4. **Public bucket**: チェックを入れる（画像をLINEで表示するため）
 5. **Create** をクリック
+
+![Storageバケット作成画面](images/supabase-storage-bucket.png)
 
 ### キャプチャリクエスト管理テーブルの作成
 
@@ -245,6 +335,8 @@ create index idx_capture_requests_token on capture_requests(request_token);
 ```
 
 3. **Table Editor** を開き、`capture_requests` テーブルが作成されていることを確認
+
+![テーブル作成確認](images/supabase-table-created.png)
 
 ---
 
@@ -410,6 +502,14 @@ supabase functions deploy mqtt-publish --no-verify-jwt
 supabase functions deploy image-upload --no-verify-jwt
 ```
 
+各コマンドで以下のように表示されればデプロイ成功です：
+
+```
+Edge Function deployed: line-webhook
+Edge Function deployed: mqtt-publish
+Edge Function deployed: image-upload
+```
+
 ---
 
 ## 6. Webhook設定・動作テスト（20分）
@@ -426,6 +526,8 @@ https://your-project.supabase.co/functions/v1/line-webhook
 
 4. **Webhook利用** をオンにする
 5. **検証** ボタンで接続テスト
+
+![Webhook URL設定画面](images/line-webhook-url.png)
 
 ### テスト1: MQTTメッセージの確認
 
@@ -450,10 +552,10 @@ MQTTメッセージには `requestToken`（UUID）が含まれます。
 PCからcurlコマンドでSpresenseの動作をシミュレートし、画像アップロード〜LINE通知の流れを確認します。
 
 ```bash
-# testdataディレクトリにテスト用画像（neko.jpg）を配置してから実行
+# supabase/testdataディレクトリにテスト用画像（neko.jpg）を配置してから実行
 # YOUR_REQUEST_TOKENはテスト1で受信したrequestTokenに置き換え
 curl -X POST https://your-project.supabase.co/functions/v1/image-upload \
-  -F "image=@testdata/neko.jpg" \
+  -F "image=@supabase/testdata/neko.jpg" \
   -F "requestToken=YOUR_REQUEST_TOKEN"
 ```
 
