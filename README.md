@@ -12,7 +12,7 @@ https://docs.google.com/presentation/d/1YbSEgG-HoJBMtP7BaQNTMhWi6nhKKAM6X92hhi0a
 デバイス側の実装用の資料です。
 https://docs.google.com/document/d/1GMsZTOQBVn1UkmASXePlPtEtfreeCBu6e4U4GXCeIf8/edit?usp=sharing
 
-クラウド側の資料です。
+クラウド側の資料です。<br>
 https://github.com/LDGQ/spresense-handson/blob/main/02_cloud/HANDSON.md
 
 ## 全体構成
