@@ -10,20 +10,20 @@
 
 // ====== LTE設定 ======
 // MEEQ SIMを前提にしている
-#define APP_LTE_APN      "meeq.io"
-#define APP_LTE_USER_NAME "meeq"
-#define APP_LTE_PASSWORD  "meeq"
+#define APP_LTE_APN      "your_apn"
+#define APP_LTE_USER_NAME "your_user"
+#define APP_LTE_PASSWORD  "your_pass"
 
 // 認証方式は環境に合わせて変更
 #define APP_LTE_AUTH_TYPE LTE_NET_AUTHTYPE_CHAP
 
 // ====== 送信先設定 ======
-// まずは HTTPでNode-REDに送信することを推奨
+// まずは HTTPでサーバーに送信することを推奨
 // ここだけ書き換えてください
 // ==============================
 const char* SERVER_HOST = "your_server";    // サーバーの設定（アップロードしたいサーバーを指定する）
 const int   SERVER_PORT = 1880;             // 送信したいポートを指定する（今回はNode-REDのポート）
-const char* SERVER_PATH = "/upload-photo";  // サーバーのパスを指定する
+const char* SERVER_PATH = "/your_pass";     // サーバーのパスを指定する
 
 const char* DEVICE_ID   = "spresense01";    // デバイスIDを任意につける
 
@@ -47,12 +47,22 @@ bool setupCamera(){
     return false;
   }
 
-  // JPEG静止画設定
+  // 静止画フォーマット設定
+  // QVGAサイズにする
+  err = theCamera.setStillPictureImageFormat(
+    CAM_IMGSIZE_QVGA_H,
+    CAM_IMGSIZE_QVGA_V,
+    CAM_IMAGE_PIX_FMT_JPG
+  );
+  
+#if 0 // VGAサイズ、JPEG形式(こちらの方が画質はいいですが安定しません)
   err = theCamera.setStillPictureImageFormat(
     CAM_IMGSIZE_VGA_H,
     CAM_IMGSIZE_VGA_V,
     CAM_IMAGE_PIX_FMT_JPG
   );
+#endif
+  
   if (err != CAM_ERR_SUCCESS) {
     printCamErr(err);
     return false;
