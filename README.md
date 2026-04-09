@@ -1,13 +1,19 @@
 # spresense-handson
 
-## 注意事項
-本リポジトリはSPRESENES×LINEのハンズオンで使用します。
+## このリポジトリについて
+本リポジトリはLINEで現実を操作する！IoTカメラとクラウドを繋ぐフィジカルAI入門ハンズオンで使用します。
 現在も内容は更新中ですので今後も変更される可能性があります。
 
-フィードバックをいただけると幸いです。
-## 目的
-SPRESENSE・クラウド・LINEを接続し、
-実際に動くシステムを体験する。
+## ハンズオンで使用する資料について
+ハンズオンで使用する資料はこちらです。
+ハンズオンの進め方についてのスライドです。
+https://docs.google.com/presentation/d/1YbSEgG-HoJBMtP7BaQNTMhWi6nhKKAM6X92hhi0aBmg/edit?usp=sharing
+
+デバイス側の実装用の資料です。
+https://docs.google.com/document/d/1GMsZTOQBVn1UkmASXePlPtEtfreeCBu6e4U4GXCeIf8/edit?usp=sharing
+
+クラウド側の資料です。
+https://github.com/LDGQ/spresense-handson/blob/main/02_cloud/HANDSON.md
 
 ## 全体構成
 - Device（SPRESENSE）
