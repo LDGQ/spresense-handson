@@ -1,10 +1,11 @@
 // Spresenseのカメラヲチェックするためのシンプルなプログラム
-// 電源が入るとカメラを初期化して5回撮影します
+// 電源が入るとカメラを初期化して1回撮影します
 // SPRESENSEのカメラのサンプルコードをベースにしています
 // SDカードを挿入しなくても動作します
 // 日本語のコメントは中村による
 // 2026-04-03 commented by S.Nakmura
-
+// 2026-06-25 fixed by S.Nakamura
+// コメントミスを修正
 /*
  *  camera.ino - Simple camera example sketch
  *  Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
